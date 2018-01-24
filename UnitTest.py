@@ -135,13 +135,16 @@ def test_kdj(ticks):
     return kdj
 
 
+# =================KDJ策略测试====================
 from matplotlib import pyplot as plt, animation
 
-fig = plt.figure()
-ax = fig.add_subplot(2, 1, 1, xlim=(0, 100), ylim=(-100, 100))
-k, = ax.plot([], [], lw=2)
-d, = ax.plot([], [], lw=2)
-j, = ax.plot([], [], lw=2)
+fig = plt.figure(figsize=(8, 6), dpi=72, facecolor="white")
+
+ax = fig.add_subplot(1, 1, 1, xlim=(0, 100), ylim=(-200, 200))
+ax.set_title("KDJ")
+line_k, = ax.plot([], [], lw=2)
+line_d, = ax.plot([], [], lw=2)
+line_j, = ax.plot([], [], lw=2)
 
 client = ApiClient()
 
@@ -159,12 +162,17 @@ sheet.write(0, 6, "成交笔数")
 sheet.write(0, 7, "成交总额")
 sheet.write(0, 8, "KDJ")
 
+x = []
+ks = []
+ds = []
+js = []
+
 
 def init():
-    k.set_data([], [])
-    d.set_data([], [])
-    j.set_data([], [])
-    return k,d,j
+    line_k.set_data([], [])
+    line_d.set_data([], [])
+    line_j.set_data([], [])
+    return line_k, line_d, line_j
 
 
 def animate(i):
@@ -200,15 +208,28 @@ def animate(i):
 
     workbook.save("/Users/arche/Desktop/a.xls")
 
+    x.append(i)
+    ks.append(kdj.k)
+    ds.append(kdj.d)
+    js.append(kdj.j)
 
-    k.set_data(i,kdj.k)
-    d.set_data(i,kdj.d)
-    j.set_data(i,kdj.j)
 
-    return k, d,j
+    line_k.set_data(x, ks)
+    line_d.set_data(x, ds)
+    line_j.set_data(x, js)
+
+    ys = ks + ds + js
+    max_y = max(ys)
+    min_y = min(ys)
+
+    ax.set_ylim(min_y - 10, max_y + 10)
+    ax.set_xlim(0, i + 10)
+
+    return line_k, line_d, line_j
 
 
 if __name__ == "__main__":
-    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=50, interval=1000)
+    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=1000, interval=1000)
+    plt.legend(('K', 'D', 'J'))
+    plt.grid(True)
     plt.show()
-
