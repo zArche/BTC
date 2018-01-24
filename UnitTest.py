@@ -135,6 +135,8 @@ def test_kdj(ticks):
     return kdj
 
 
+from matplotlib import pyplot as plt
+
 if __name__ == "__main__":
 
     client = ApiClient()
@@ -153,8 +155,13 @@ if __name__ == "__main__":
     sheet.write(0, 7, "成交总额")
     sheet.write(0, 8, "KDJ")
 
+    indexs = []
+    ks = []
+    ds = []
+    js = []
+
     i = 0
-    while True:
+    while i < 30:
         i = i + 1  # 从第一列开始
         market = test_market(client, symbol, "1min", "9")
 
@@ -177,7 +184,7 @@ if __name__ == "__main__":
         print "[k,d,j] -> [%s,%s,%s]" % (kdj.k, kdj.d, kdj.j)
         print "-" * 87
 
-        sheet.write(i, 0, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+        sheet.write(i, 0,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         sheet.write(i, 1, tick.open)
         sheet.write(i, 2, tick.close)
         sheet.write(i, 3, tick.low)
@@ -189,4 +196,21 @@ if __name__ == "__main__":
 
         workbook.save("/Users/arche/Desktop/a.xls")
 
+        indexs.append(i)
+        ks.append(kdj.k)
+        ds.append(kdj.d)
+        js.append(kdj.j)
         time.sleep(1)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    fig.suptitle("KDJ", fontsize=14, fontweight='bold')
+
+    ax.plot(indexs, ks)
+    ax.plot(indexs, ds)
+    ax.plot(indexs, js)
+
+    plt.legend(('K', 'D', 'J'))
+    plt.grid(True)
+    plt.show()
+
