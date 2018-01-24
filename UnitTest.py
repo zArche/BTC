@@ -135,82 +135,80 @@ def test_kdj(ticks):
     return kdj
 
 
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt, animation
+
+fig = plt.figure()
+ax = fig.add_subplot(2, 1, 1, xlim=(0, 100), ylim=(-100, 100))
+k, = ax.plot([], [], lw=2)
+d, = ax.plot([], [], lw=2)
+j, = ax.plot([], [], lw=2)
+
+client = ApiClient()
+
+symbol = Symbol(Symbol.BTC, Symbol.USDT).get_symbol()
+
+workbook = xlwt.Workbook('utf-8')
+sheet = workbook.add_sheet("sheet1", True)
+sheet.write(0, 0, "时间")
+sheet.write(0, 1, "开盘价")
+sheet.write(0, 2, "收盘价")
+sheet.write(0, 3, "最低价")
+sheet.write(0, 4, "最高价")
+sheet.write(0, 5, "成交量")
+sheet.write(0, 6, "成交笔数")
+sheet.write(0, 7, "成交总额")
+sheet.write(0, 8, "KDJ")
+
+
+def init():
+    k.set_data([], [])
+    d.set_data([], [])
+    j.set_data([], [])
+    return k,d,j
+
+
+def animate(i):
+    market = test_market(client, symbol, "1min", "9")
+    ticks = market.ticks[::-1]  # 倒序翻转
+
+    print "=" * 40 + "近期行情" + "=" * 40
+
+    for tick in ticks:
+        print tick
+
+    print "=" * 88
+
+    print "\n\n"
+
+    kdj = test_kdj(ticks)
+
+    tick = ticks[-1]
+    print "-" * 40 + "KDJ信息" + "-" * 40
+    print "当前点行情:" + str(tick)
+    print "[k,d,j] -> [%s,%s,%s]" % (kdj.k, kdj.d, kdj.j)
+    print "-" * 87
+
+    sheet.write(i, 0, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    sheet.write(i, 1, tick.open)
+    sheet.write(i, 2, tick.close)
+    sheet.write(i, 3, tick.low)
+    sheet.write(i, 4, tick.high)
+    sheet.write(i, 5, tick.amount)
+    sheet.write(i, 6, tick.count)
+    sheet.write(i, 7, tick.vol)
+    sheet.write(i, 8, "[%s,%s,%s]" % (kdj.k, kdj.d, kdj.j))
+
+    workbook.save("/Users/arche/Desktop/a.xls")
+
+
+    k.set_data(i,kdj.k)
+    d.set_data(i,kdj.d)
+    j.set_data(i,kdj.j)
+
+    return k, d,j
+
 
 if __name__ == "__main__":
-
-    client = ApiClient()
-
-    symbol = Symbol(Symbol.BTC, Symbol.USDT).get_symbol()
-
-    workbook = xlwt.Workbook('utf-8')
-    sheet = workbook.add_sheet("sheet1", True)
-    sheet.write(0, 0, "时间")
-    sheet.write(0, 1, "开盘价")
-    sheet.write(0, 2, "收盘价")
-    sheet.write(0, 3, "最低价")
-    sheet.write(0, 4, "最高价")
-    sheet.write(0, 5, "成交量")
-    sheet.write(0, 6, "成交笔数")
-    sheet.write(0, 7, "成交总额")
-    sheet.write(0, 8, "KDJ")
-
-    indexs = []
-    ks = []
-    ds = []
-    js = []
-
-    i = 0
-    while i < 30:
-        i = i + 1  # 从第一列开始
-        market = test_market(client, symbol, "1min", "9")
-
-        ticks = market.ticks[::-1]  # 倒序翻转
-
-        print "=" * 40 + "近期行情" + "=" * 40
-
-        for tick in ticks:
-            print tick
-
-        print "=" * 88
-
-        print "\n\n"
-
-        kdj = test_kdj(ticks)
-
-        tick = ticks[-1]
-        print "-" * 40 + "KDJ信息" + "-" * 40
-        print "当前点行情:" + str(tick)
-        print "[k,d,j] -> [%s,%s,%s]" % (kdj.k, kdj.d, kdj.j)
-        print "-" * 87
-
-        sheet.write(i, 0,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-        sheet.write(i, 1, tick.open)
-        sheet.write(i, 2, tick.close)
-        sheet.write(i, 3, tick.low)
-        sheet.write(i, 4, tick.high)
-        sheet.write(i, 5, tick.amount)
-        sheet.write(i, 6, tick.count)
-        sheet.write(i, 7, tick.vol)
-        sheet.write(i, 8, "[%s,%s,%s]" % (kdj.k, kdj.d, kdj.j))
-
-        workbook.save("/Users/arche/Desktop/a.xls")
-
-        indexs.append(i)
-        ks.append(kdj.k)
-        ds.append(kdj.d)
-        js.append(kdj.j)
-        time.sleep(1)
-
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    fig.suptitle("KDJ", fontsize=14, fontweight='bold')
-
-    ax.plot(indexs, ks)
-    ax.plot(indexs, ds)
-    ax.plot(indexs, js)
-
-    plt.legend(('K', 'D', 'J'))
-    plt.grid(True)
+    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=50, interval=1000)
     plt.show()
 
