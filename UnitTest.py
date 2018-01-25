@@ -5,6 +5,9 @@ from model.Symbol import Symbol
 from policy.KDJ import KDJ
 import xlwt
 import time
+from matplotlib import pyplot as plt, animation
+
+from util import KDJUtil
 
 
 def test_market(client, symbol, period, size):
@@ -135,101 +138,219 @@ def test_kdj(ticks):
     return kdj
 
 
-# =================KDJ策略测试====================
-from matplotlib import pyplot as plt, animation
+def get_1min_data(client, symbol, size):
+    market = test_market(client, symbol, "1min", size)
+    return market
 
-fig = plt.figure(figsize=(8, 6), dpi=72, facecolor="white")
 
-ax = fig.add_subplot(1, 1, 1, xlim=(0, 100), ylim=(-200, 200))
-ax.set_title("KDJ")
-line_k, = ax.plot([], [], lw=2)
-line_d, = ax.plot([], [], lw=2)
-line_j, = ax.plot([], [], lw=2)
+def get_15min_data(client, symbol, size):
+    market = test_market(client, symbol, "15min", size)
+    return market
 
-client = ApiClient()
 
-symbol = Symbol(Symbol.BTC, Symbol.USDT).get_symbol()
+def get_60min_data(client, symbol, size):
+    market = test_market(client, symbol, "60min", size)
+    return market
 
-workbook = xlwt.Workbook('utf-8')
-sheet = workbook.add_sheet("sheet1", True)
-sheet.write(0, 0, "时间")
-sheet.write(0, 1, "开盘价")
-sheet.write(0, 2, "收盘价")
-sheet.write(0, 3, "最低价")
-sheet.write(0, 4, "最高价")
-sheet.write(0, 5, "成交量")
-sheet.write(0, 6, "成交笔数")
-sheet.write(0, 7, "成交总额")
-sheet.write(0, 8, "KDJ")
 
-x = []
-ks = []
-ds = []
-js = []
+def save_excel(ticks, kdjs, path):
+    workbook = xlwt.Workbook('utf-8')
+    sheet = workbook.add_sheet("sheet1", True)
+    sheet.write(0, 0, "时间")
+    sheet.write(0, 1, "开盘价")
+    sheet.write(0, 2, "收盘价")
+    sheet.write(0, 3, "最低价")
+    sheet.write(0, 4, "最高价")
+    sheet.write(0, 5, "成交量")
+    sheet.write(0, 6, "成交笔数")
+    sheet.write(0, 7, "成交总额")
+    sheet.write(0, 8, "KDJ")
+
+    for i in range(0, len(ticks)):
+        tick = ticks[i]
+        kdj = kdjs[i]
+
+        sheet.write(i, 0, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+        sheet.write(i, 1, tick.open)
+        sheet.write(i, 2, tick.close)
+        sheet.write(i, 3, tick.low)
+        sheet.write(i, 4, tick.high)
+        sheet.write(i, 5, tick.amount)
+        sheet.write(i, 6, tick.count)
+        sheet.write(i, 7, tick.vol)
+        sheet.write(i, 8, "[%s,%s,%s]" % (kdj.k, kdj.d, kdj.j))
+
+    workbook.save(path)
 
 
 def init():
-    line_k.set_data([], [])
-    line_d.set_data([], [])
-    line_j.set_data([], [])
-    return line_k, line_d, line_j
+    global xs_of_1min
+    global ks_of_1min
+    global ds_of_1min
+    global js_of_1min
+
+    num = 60  # 绘制最近60个点
+    period = 9  # JDK随机指标计算周期
+
+    markets_of_1min = get_1min_data(client, symbol, num)
+    markets_of_15min = get_15min_data(client, symbol, num)
+    markets_of_60min = get_60min_data(client, symbol, num)
+
+    ticks_of_1min = markets_of_1min.ticks[::-1]  # 倒序翻转
+    ticks_of_15min = markets_of_15min.ticks[::-1]  # 倒序翻转
+    ticks_of_60min = markets_of_60min.ticks[::-1]  # 倒序翻转
+
+    ticks_of_1min, kdjs_of_1min = KDJUtil.kdj(ticks_of_1min, period)
+    ticks_of_15min, kdjs_of_15min = KDJUtil.kdj(ticks_of_15min, period)
+    ticks_of_60min, kdjs_of_60min = KDJUtil.kdj(ticks_of_60min, period)
+
+    for i in range(0, len(ticks_of_1min)):
+        xs_of_1min.append(i)
+        ks_of_1min.append(kdjs_of_1min[i].k)
+        ds_of_1min.append(kdjs_of_1min[i].d)
+        js_of_1min.append(kdjs_of_1min[i].j)
+
+    for i in range(0, len(ticks_of_15min)):
+        xs_of_15min.append(i)
+        ks_of_15min.append(kdjs_of_15min[i].k)
+        ds_of_15min.append(kdjs_of_15min[i].d)
+        js_of_15min.append(kdjs_of_15min[i].j)
+
+    for i in range(0, len(ticks_of_60min)):
+        xs_of_60min.append(i)
+        ks_of_60min.append(kdjs_of_60min[i].k)
+        ds_of_60min.append(kdjs_of_60min[i].d)
+        js_of_60min.append(kdjs_of_60min[i].j)
+
+    line_k_of_1min.set_data(xs_of_1min, ks_of_1min)
+    line_d_of_1min.set_data(xs_of_1min, ds_of_1min)
+    line_j_of_1min.set_data(xs_of_1min, js_of_1min)
+
+    line_k_of_15min.set_data(xs_of_15min, ks_of_15min)
+    line_d_of_15min.set_data(xs_of_15min, ds_of_15min)
+    line_j_of_15min.set_data(xs_of_15min, js_of_15min)
+
+    line_k_of_60min.set_data(xs_of_60min, ks_of_60min)
+    line_d_of_60min.set_data(xs_of_60min, ds_of_60min)
+    line_j_of_60min.set_data(xs_of_60min, js_of_60min)
+
+    return line_k_of_1min, line_d_of_1min, line_j_of_1min, \
+           line_k_of_15min, line_d_of_15min, line_j_of_15min, \
+           line_k_of_60min, line_d_of_60min, line_j_of_60min
 
 
 def animate(i):
-    market = test_market(client, symbol, "1min", "9")
-    ticks = market.ticks[::-1]  # 倒序翻转
+    global xs_of_1min
+    global ks_of_1min
+    global ds_of_1min
+    global js_of_1min
 
-    print "=" * 40 + "近期行情" + "=" * 40
+    global xs_of_15min
+    global ks_of_15min
+    global ds_of_15min
+    global js_of_15min
 
-    for tick in ticks:
-        print tick
+    global xs_of_60min
+    global ks_of_60min
+    global ds_of_60min
+    global js_of_60min
 
-    print "=" * 88
+    period = 9  # JDK随机指标计算周期
 
-    print "\n\n"
+    markets_of_1min = get_1min_data(client, symbol, period)
+    markets_of_15min = get_15min_data(client, symbol, period)
+    markets_of_60min = get_60min_data(client, symbol, period)
 
-    kdj = test_kdj(ticks)
+    ticks_of_1min = markets_of_1min.ticks[::-1]  # 倒序翻转
+    ticks_of_15min = markets_of_15min.ticks[::-1]  # 倒序翻转
+    ticks_of_60min = markets_of_60min.ticks[::-1]  # 倒序翻转
 
-    tick = ticks[-1]
-    print "-" * 40 + "KDJ信息" + "-" * 40
-    print "当前点行情:" + str(tick)
-    print "[k,d,j] -> [%s,%s,%s]" % (kdj.k, kdj.d, kdj.j)
-    print "-" * 87
+    ticks_of_1min, kdjs_of_1min = KDJUtil.kdj(ticks_of_1min, period)
+    ticks_of_15min, kdjs_of_15min = KDJUtil.kdj(ticks_of_15min, period)
+    ticks_of_60min, kdjs_of_60min = KDJUtil.kdj(ticks_of_60min, period)
 
-    sheet.write(i, 0, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-    sheet.write(i, 1, tick.open)
-    sheet.write(i, 2, tick.close)
-    sheet.write(i, 3, tick.low)
-    sheet.write(i, 4, tick.high)
-    sheet.write(i, 5, tick.amount)
-    sheet.write(i, 6, tick.count)
-    sheet.write(i, 7, tick.vol)
-    sheet.write(i, 8, "[%s,%s,%s]" % (kdj.k, kdj.d, kdj.j))
+    xs_of_1min.append(1 + len(xs_of_1min))
+    ks_of_1min.append(kdjs_of_1min[0].k)
+    ds_of_1min.append(kdjs_of_1min[0].d)
+    js_of_1min.append(kdjs_of_1min[0].j)
+    ax_1min_kdj.set_xlim(len(xs_of_1min) - 60, len(xs_of_1min))
 
-    workbook.save("/Users/arche/Desktop/a.xls")
+    xs_of_15min.append(1 + len(xs_of_15min))
+    ks_of_15min.append(kdjs_of_15min[0].k)
+    ds_of_15min.append(kdjs_of_15min[0].d)
+    js_of_15min.append(kdjs_of_15min[0].j)
+    ax_15min_kdj.set_xlim(len(xs_of_15min) - 60, len(xs_of_15min))
 
-    x.append(i)
-    ks.append(kdj.k)
-    ds.append(kdj.d)
-    js.append(kdj.j)
+    xs_of_60min.append(1 + len(xs_of_60min))
+    ks_of_60min.append(kdjs_of_60min[0].k)
+    ds_of_60min.append(kdjs_of_60min[0].d)
+    js_of_60min.append(kdjs_of_60min[0].j)
+    ax_60min_kdj.set_xlim(len(xs_of_60min) - 60, len(xs_of_60min))
 
 
-    line_k.set_data(x, ks)
-    line_d.set_data(x, ds)
-    line_j.set_data(x, js)
+    line_k_of_1min.set_data(xs_of_1min, ks_of_1min)
+    line_d_of_1min.set_data(xs_of_1min, ds_of_1min)
+    line_j_of_1min.set_data(xs_of_1min, js_of_1min)
 
-    ys = ks + ds + js
-    max_y = max(ys)
-    min_y = min(ys)
+    line_k_of_15min.set_data(xs_of_15min, ks_of_15min)
+    line_d_of_15min.set_data(xs_of_15min, ds_of_15min)
+    line_j_of_15min.set_data(xs_of_15min, js_of_15min)
 
-    ax.set_ylim(min_y - 10, max_y + 10)
-    ax.set_xlim(0, i + 10)
+    line_k_of_60min.set_data(xs_of_60min, ks_of_60min)
+    line_d_of_60min.set_data(xs_of_60min, ds_of_60min)
+    line_j_of_60min.set_data(xs_of_60min, js_of_60min)
 
-    return line_k, line_d, line_j
+
+    return line_k_of_1min, line_d_of_1min, line_j_of_1min, \
+           line_k_of_15min, line_d_of_15min, line_j_of_15min, \
+           line_k_of_60min, line_d_of_60min, line_j_of_60min
 
 
 if __name__ == "__main__":
+    fig = plt.figure(figsize=(12, 9), dpi=72, facecolor="white")
+
+    ax_1min_kdj = fig.add_subplot(3, 1, 1, xlim=(0, 60), ylim=(-200, 200))  # 1min KDJ 线
+    ax_1min_kdj.set_title("1Min KDJ")
+
+    ax_15min_kdj = fig.add_subplot(3, 1, 2, xlim=(0, 60), ylim=(-200, 200))  # 15min KDJ线
+    ax_15min_kdj.set_title("15Min KDJ")
+
+    ax_60min_kdj = fig.add_subplot(3, 1, 3, xlim=(0, 60), ylim=(-200, 200))  # 60min KDJ线
+    ax_60min_kdj.set_title("60Min KDJ")
+
+    line_k_of_1min, = ax_1min_kdj.plot([], [], lw=2)  # 1min KDJ K线
+    line_d_of_1min, = ax_1min_kdj.plot([], [], lw=2)  # 1min KDJ D线
+    line_j_of_1min, = ax_1min_kdj.plot([], [], lw=2)  # 1min KDJ J线
+
+    line_k_of_15min, = ax_15min_kdj.plot([], [], lw=2)  # 15min KDJ K线
+    line_d_of_15min, = ax_15min_kdj.plot([], [], lw=2)  # 15min KDJ D线
+    line_j_of_15min, = ax_15min_kdj.plot([], [], lw=2)  # 15min KDJ J线
+
+    line_k_of_60min, = ax_60min_kdj.plot([], [], lw=2)  # 60min KDJ K线
+    line_d_of_60min, = ax_60min_kdj.plot([], [], lw=2)  # 60min KDJ D线
+    line_j_of_60min, = ax_60min_kdj.plot([], [], lw=2)  # 60min KDJ J线
+
+    client = ApiClient()
+
+    symbol = Symbol(Symbol.BTC, Symbol.USDT).get_symbol()
+
+    xs_of_1min = []
+    ks_of_1min = []
+    ds_of_1min = []
+    js_of_1min = []
+
+    xs_of_15min = []
+    ks_of_15min = []
+    ds_of_15min = []
+    js_of_15min = []
+
+    xs_of_60min = []
+    ks_of_60min = []
+    ds_of_60min = []
+    js_of_60min = []
+
     anim = animation.FuncAnimation(fig, animate, init_func=init, frames=1000, interval=1000)
+
     plt.legend(('K', 'D', 'J'))
     plt.grid(True)
     plt.show()

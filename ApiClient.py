@@ -22,6 +22,10 @@ class ApiClient:
         '''
         json = get_kline(symbol, period, size)
 
+        if json is None:
+            print "Error: get kline failed"
+            return None
+
         if json["status"] != "ok":
             print "Error:", json["err-msg"]
             return None
@@ -345,4 +349,3 @@ class ApiClient:
 
             orders.append(loan_order)
         return orders
-
