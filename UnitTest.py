@@ -279,11 +279,23 @@ def animate(i):
     ticks_of_15min, kdjs_of_15min = KDJUtil.kdj(ticks_of_15min, period)
     ticks_of_60min, kdjs_of_60min = KDJUtil.kdj(ticks_of_60min, period)
 
+    if i % 60 != 0:  # 1min内只更新
+        xs_of_1min = xs_of_1min[0:len(xs_of_1min) - 1]
+        ks_of_1min = ks_of_1min[0:len(ks_of_1min) - 1]
+        ds_of_1min = ds_of_1min[0:len(ds_of_1min) - 1]
+        js_of_1min = js_of_1min[0:len(js_of_1min) - 1]
+
     xs_of_1min.append(1 + len(xs_of_1min))
     ks_of_1min.append(kdjs_of_1min[0].k)
     ds_of_1min.append(kdjs_of_1min[0].d)
     js_of_1min.append(kdjs_of_1min[0].j)
     ax_1min_kdj.set_xlim(len(xs_of_1min) - 60, len(xs_of_1min))
+
+    if i % (60 * 15) != 0:  # 15min内只更新
+        xs_of_15min = xs_of_15min[0:len(xs_of_15min) - 1]
+        ks_of_15min = ks_of_15min[0:len(ks_of_15min) - 1]
+        ds_of_15min = ds_of_15min[0:len(ds_of_15min) - 1]
+        js_of_15min = js_of_15min[0:len(js_of_15min) - 1]
 
     xs_of_15min.append(1 + len(xs_of_15min))
     ks_of_15min.append(kdjs_of_15min[0].k)
@@ -291,12 +303,17 @@ def animate(i):
     js_of_15min.append(kdjs_of_15min[0].j)
     ax_15min_kdj.set_xlim(len(xs_of_15min) - 60, len(xs_of_15min))
 
+    if i % (60 * 60) != 0:  # 60min内只更新
+        xs_of_60min = xs_of_60min[0:len(xs_of_60min) - 1]
+        ks_of_60min = ks_of_60min[0:len(ks_of_60min) - 1]
+        ds_of_60min = ds_of_60min[0:len(ds_of_60min) - 1]
+        js_of_60min = js_of_60min[0:len(js_of_60min) - 1]
+
     xs_of_60min.append(1 + len(xs_of_60min))
     ks_of_60min.append(kdjs_of_60min[0].k)
     ds_of_60min.append(kdjs_of_60min[0].d)
     js_of_60min.append(kdjs_of_60min[0].j)
     ax_60min_kdj.set_xlim(len(xs_of_60min) - 60, len(xs_of_60min))
-
 
     line_k_of_1min.set_data(xs_of_1min, ks_of_1min)
     line_d_of_1min.set_data(xs_of_1min, ds_of_1min)
@@ -310,7 +327,6 @@ def animate(i):
     line_d_of_60min.set_data(xs_of_60min, ds_of_60min)
     line_j_of_60min.set_data(xs_of_60min, js_of_60min)
 
-
     return line_k_of_1min, line_d_of_1min, line_j_of_1min, \
            line_k_of_15min, line_d_of_15min, line_j_of_15min, \
            line_k_of_60min, line_d_of_60min, line_j_of_60min
@@ -319,13 +335,13 @@ def animate(i):
 if __name__ == "__main__":
     fig = plt.figure(figsize=(12, 9), dpi=72, facecolor="white")
 
-    ax_1min_kdj = fig.add_subplot(3, 1, 1, xlim=(0, 60), ylim=(-200, 200))  # 1min KDJ 线
+    ax_1min_kdj = fig.add_subplot(3, 1, 1, xlim=(0, 60), ylim=(-10, 120))  # 1min KDJ 线
     ax_1min_kdj.set_title("1Min KDJ")
 
-    ax_15min_kdj = fig.add_subplot(3, 1, 2, xlim=(0, 60), ylim=(-200, 200))  # 15min KDJ线
+    ax_15min_kdj = fig.add_subplot(3, 1, 2, xlim=(0, 60), ylim=(-10, 120))  # 15min KDJ线
     ax_15min_kdj.set_title("15Min KDJ")
 
-    ax_60min_kdj = fig.add_subplot(3, 1, 3, xlim=(0, 60), ylim=(-200, 200))  # 60min KDJ线
+    ax_60min_kdj = fig.add_subplot(3, 1, 3, xlim=(0, 60), ylim=(-10, 120))  # 60min KDJ线
     ax_60min_kdj.set_title("60Min KDJ")
 
     line_k_of_1min, = ax_1min_kdj.plot([], [], lw=2)  # 1min KDJ K线
