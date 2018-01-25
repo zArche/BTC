@@ -189,12 +189,22 @@ def init():
     global ds_of_1min
     global js_of_1min
 
+    global xs_of_15min
+    global ks_of_15min
+    global ds_of_15min
+    global js_of_15min
+
+    global xs_of_60min
+    global ks_of_60min
+    global ds_of_60min
+    global js_of_60min
+
     num = 60  # 绘制最近60个点
     period = 9  # JDK随机指标计算周期
 
-    markets_of_1min = get_1min_data(client, symbol, num)
-    markets_of_15min = get_15min_data(client, symbol, num)
-    markets_of_60min = get_60min_data(client, symbol, num)
+    markets_of_1min = get_1min_data(client, symbol, num + period)
+    markets_of_15min = get_15min_data(client, symbol, num + period)
+    markets_of_60min = get_60min_data(client, symbol, num + period)
 
     ticks_of_1min = markets_of_1min.ticks[::-1]  # 倒序翻转
     ticks_of_15min = markets_of_15min.ticks[::-1]  # 倒序翻转
