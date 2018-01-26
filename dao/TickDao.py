@@ -37,5 +37,33 @@ class TickDao:
         except:
             self.db.rollback()
 
+    def update(self, table, tick_id, tick, kdj, period):
+        '''
+         :param table: 表名
+         :param tick: 离散点数据
+         :param kdj: 对应的kdj数据
+         :param period: 离散点时间单位(1min,15min,60min)
+         :return:
+         '''
+
+        sql = """UPDATE %s SET period = %s,count = %s,vol = %s,high = %s,
+        amount = %s,low = %s,close = %s,open = %s,k = %s,d = %s,j = %s""" % (
+            table, period, tick.count, tick.vol, tick.high, tick.amount, tick.low, tick.close, tick.open, kdj.k, kdj.d,
+            kdj.j)
+
+        try:
+            self.cursor.execute(sql)
+            self.db.commit()
+        except:
+            self.db.rollback()
+
+    def delete(self, table, tick_id):
+        sql = "DELETE FROM %s WHERE tick_id = %s" % (table, tick_id)
+        try:
+            self.cursor.execute(sql)
+            self.db.commit()
+        except:
+            self.db.rollback()
+
     def close(self):
         self.db.close()

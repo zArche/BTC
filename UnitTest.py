@@ -284,11 +284,10 @@ def animate(i):
     ticks_of_15min, kdjs_of_15min = KDJUtil.kdj(ticks_of_15min, period)
     ticks_of_60min, kdjs_of_60min = KDJUtil.kdj(ticks_of_60min, period)
 
-    dao.insert(TABLE_NAME, ticks_of_1min, kdjs_of_1min, "1min")
-    dao.insert(TABLE_NAME, ticks_of_15min, kdjs_of_15min, "15min")
-    dao.insert(TABLE_NAME, ticks_of_60min, kdjs_of_60min, "60min")
+
 
     if i % 60 != 0:  # 1min内只更新
+        dao.delete(TABLE_NAME,ticks_of_1min[0].id)
         xs_of_1min = xs_of_1min[0:-1]
         ks_of_1min = ks_of_1min[0:-1]
         ds_of_1min = ds_of_1min[0:-1]
@@ -301,6 +300,7 @@ def animate(i):
     ax_1min_kdj.set_xlim(len(xs_of_1min) - 60, len(xs_of_1min))
 
     if i % (60 * 15) != 0:  # 15min内只更新
+        dao.delete(TABLE_NAME, ticks_of_15min[0].id)
         xs_of_15min = xs_of_15min[0:-1]
         ks_of_15min = ks_of_15min[0:-1]
         ds_of_15min = ds_of_15min[0:-1]
@@ -313,10 +313,15 @@ def animate(i):
     ax_15min_kdj.set_xlim(len(xs_of_15min) - 60, len(xs_of_15min))
 
     if i % (60 * 60) != 0:  # 60min内只更新
+        dao.delete(TABLE_NAME, ticks_of_60min[0].id)
         xs_of_60min = xs_of_60min[0:-1]
         ks_of_60min = ks_of_60min[0:-1]
         ds_of_60min = ds_of_60min[0:-1]
         js_of_60min = js_of_60min[0:-1]
+
+    dao.insert(TABLE_NAME, ticks_of_1min, kdjs_of_1min, "1min")
+    dao.insert(TABLE_NAME, ticks_of_15min, kdjs_of_15min, "15min")
+    dao.insert(TABLE_NAME, ticks_of_60min, kdjs_of_60min, "60min")
 
     xs_of_60min.append(1 + len(xs_of_60min))
     ks_of_60min.append(kdjs_of_60min[0].k)
