@@ -1,2 +1,4 @@
 .idea/workspace.xml
 */Config
+*.pyc
+.idea/misc.xml
