@@ -1,6 +1,7 @@
 # coding:utf-8
-
+import Config
 from ApiClient import ApiClient
+from dao.TickDao import TickDao
 from model.Symbol import Symbol
 from policy.KDJ import KDJ
 import xlwt
@@ -214,6 +215,10 @@ def init():
     ticks_of_15min, kdjs_of_15min = KDJUtil.kdj(ticks_of_15min, period)
     ticks_of_60min, kdjs_of_60min = KDJUtil.kdj(ticks_of_60min, period)
 
+    dao.insert(TABLE_NAME, ticks_of_1min, kdjs_of_1min, "1min")
+    dao.insert(TABLE_NAME, ticks_of_15min, kdjs_of_15min, "15min")
+    dao.insert(TABLE_NAME, ticks_of_60min, kdjs_of_60min, "60min")
+
     for i in range(0, len(ticks_of_1min)):
         xs_of_1min.append(i)
         ks_of_1min.append(kdjs_of_1min[i].k)
@@ -279,6 +284,10 @@ def animate(i):
     ticks_of_15min, kdjs_of_15min = KDJUtil.kdj(ticks_of_15min, period)
     ticks_of_60min, kdjs_of_60min = KDJUtil.kdj(ticks_of_60min, period)
 
+    dao.insert(TABLE_NAME, ticks_of_1min, kdjs_of_1min, "1min")
+    dao.insert(TABLE_NAME, ticks_of_15min, kdjs_of_15min, "15min")
+    dao.insert(TABLE_NAME, ticks_of_60min, kdjs_of_60min, "60min")
+
     if i % 60 != 0:  # 1min内只更新
         xs_of_1min = xs_of_1min[0:-1]
         ks_of_1min = ks_of_1min[0:-1]
@@ -333,6 +342,10 @@ def animate(i):
 
 
 if __name__ == "__main__":
+    dao = TickDao(Config.HOST_NAME, Config.USER_NAME, Config.PASSWORD, Config.DATA_BASE_NAME)
+
+    TABLE_NAME = "ticks"
+
     fig = plt.figure(figsize=(12, 9), dpi=72, facecolor="white")
 
     ax_1min_kdj = fig.add_subplot(3, 1, 1, xlim=(0, 60), ylim=(-10, 120))  # 1min KDJ 线
