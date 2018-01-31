@@ -21,14 +21,14 @@ class TickDao:
         for i in range(0, len(ticks)):
             tick = ticks[i]
             kdj = kdjs[i]
-
-            values = values + "('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')," % (
+            avg = float(tick.vol) / float(tick.amount)
+            values = values + "('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')," % (
                 tick.id, period, tick.count, tick.vol, tick.high, tick.amount, tick.low, tick.close, tick.open, kdj.k,
-                kdj.d, kdj.j)
+                kdj.d, kdj.j, avg)
 
         values = values[0:-1]
 
-        sql = """INSERT INTO %s(tick_id,period,count, vol, high, amount,low,close,open,k,d,j)
+        sql = """INSERT INTO %s(tick_id,period,count, vol, high, amount,low,close,open,k,d,j,avg)
                  VALUES %s""" % (table, values)
 
         try:
